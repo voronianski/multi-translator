@@ -27,10 +27,11 @@ module.exports = function translate (req, res, next) {
   }
 
   Promise.all(requests)
-    .then(responses => {
+    .then(([gtResponse, ...otherResponses]) => {
       res.json({
-        googletranslate: responses[0],
-        ...responses.reduce((memo, response) => {
+        googletranslate: gtResponse,
+
+        ...otherResponses.reduce((memo, response) => {
           memo[response.name] = response.data;
 
           return memo;
