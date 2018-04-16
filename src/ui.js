@@ -1,22 +1,41 @@
 const Vue = require('vue');
 const renderer = require('vue-server-renderer').createRenderer();
-const { transform } = require('@babel/core');
 const UglifyJS = require('uglify-js');
-const { env } = require('c0nfig');
+const { transform } = require('@babel/core');
+const { env, priorityLangs } = require('c0nfig');
+const { languagesAll } = require('countries-list');
+
+const OTHER_LANGS = { ...languagesAll };
+const TOP_LANGS = Object.keys(languagesAll)
+  .filter(lang => {
+    return priorityLangs.includes(lang);
+  })
+  .reduce((memo, lang) => {
+    memo[lang] = languagesAll[lang];
+
+    delete OTHER_LANGS[lang];
+
+    return memo;
+  }, {});
 
 function createApp (data) {
   return new Vue({
     data() {
       return {
+        // server data
         text: data.text,
         toLang: data.toLang,
         fromLang: data.fromLang,
+        topLangs: data.topLangs,
+        otherLangs: data.otherLangs,
+
+        // client data
         t: {},
         error: null
       };
     },
 
-    mounted() {
+    beforeMount() {
       this.getTranslation();
     },
 
@@ -40,9 +59,57 @@ function createApp (data) {
     template: `
       <div class="app">
         <div>
+          <label>From:</label>
+          <select v-model="fromLang" placeholder="Language from">
+            <optgroup>
+              <option
+                v-for="(langVal, langName) in topLangs"
+                :value="langName"
+                :selected="langName === fromLang">
+                {{langVal.name}}
+              </option>
+            </optgroup>
+            <optgroup>
+              <option
+                v-for="(langVal, langName) in otherLangs"
+                :value="langName"
+                :selected="langName === fromLang">
+                {{langVal.name}}
+              </option>
+            </optgroup>
+          </select>
+
+          <label>To:</label>
+          <select v-model="toLang" placeholder="Language to">
+            <optgroup>
+              <option
+                v-for="(langVal, langName) in topLangs"
+                :value="langName"
+                :selected="langName === toLang">
+                {{langVal.name}}
+              </option>
+            </optgroup>
+            <optgroup>
+              <option
+                v-for="(langVal, langName) in otherLangs"
+                :value="langName"
+                :selected="langName === toLang">
+                {{langVal.name}}
+              </option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div>
+          <label>Text:</label>
+          <textarea v-model="text" placeholder="Word to translate"></textarea>
+        </div>
+
+        <div>
           <span>{{text}} / {{fromLang}} / {{toLang}}</span>
           <a href="#" @click="handleClick">Click</a>
         </div>
+
         <div v-if="t.googletranslate">
           {{t.googletranslate.text}}
         </div>
@@ -116,6 +183,8 @@ module.exports = function ui (req, res, next) {
     text: req.query.text,
     toLang: req.query.to,
     fromLang: req.query.from,
+    otherLangs: OTHER_LANGS,
+    topLangs: TOP_LANGS
   };
   const app = createApp(state);
 
