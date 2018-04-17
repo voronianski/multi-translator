@@ -164,7 +164,9 @@ function createApp (data) {
               </option>
             </optgroup>
           </select>
+        </div>
 
+        <div>
           <label>To:</label>
           <select v-model="toLang" placeholder="Language to">
             <optgroup>
@@ -192,7 +194,7 @@ function createApp (data) {
         </div>
 
         <div>
-          <button type="button" @click="handleClick">Click</button>
+          <button type="button" @click="handleClick">Translate</button>
         </div>
 
         <div v-if="error">
