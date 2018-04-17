@@ -307,14 +307,14 @@ function html (appString, state) {
         <link href="https://unpkg.com/basscss@7.1.1/css/basscss.min.css" rel="stylesheet">
       </head>
       <body>
-        <div class="clearfix white bg-black">
+        <div class="clearfix white bg-black relative">
           <div class="center absolute top-0 left-0 right-0 bottom-0 clearfix">
-            <a href="/" class="btn py2 h3 m0">
+            <a href="/ui" class="btn py2 h3 m0">
               <sup class="regular h5">multi</sup>
               <span>translator</span>
             </a>
           </div>
-          <div class="right">
+          <div class="right relative z1">
             <a href="https://github.com/voronianski/multi-translator" class="btn py2 m0 regular h6 caps" target="_blank">
               GitHub
             </a>
