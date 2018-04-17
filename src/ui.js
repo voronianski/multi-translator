@@ -72,6 +72,10 @@ function createApp (data) {
         this.toLang = fromLang;
         this.fromLang = toLang;
 
+        if (!this.text) {
+          return;
+        }
+
         this.updateLink();
         this.getTranslation();
         this.saveToHistory();
