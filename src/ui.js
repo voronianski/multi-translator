@@ -28,6 +28,7 @@ function createApp (data) {
         fromLang: data.fromLang,
         topLangs: data.topLangs,
         otherLangs: data.otherLangs,
+        allLangs: data.allLangs,
 
         // client data
         t: {},
@@ -54,10 +55,22 @@ function createApp (data) {
     },
 
     methods: {
-      handleClick() {
+      handleTranslate() {
         if (!this.text) {
           return;
         }
+
+        this.updateLink();
+        this.getTranslation();
+        this.saveToHistory();
+      },
+
+      handleSwap() {
+        const toLang = this.toLang;
+        const fromLang = this.fromLang;
+
+        this.toLang = fromLang;
+        this.fromLang = toLang;
 
         this.updateLink();
         this.getTranslation();
@@ -143,7 +156,7 @@ function createApp (data) {
     },
 
     template: `
-      <div class="container p3" style="max-width: 600px;">
+      <div class="container p3" style="max-width: 500px;">
         <div>
           <label class="label">From:</label>
           <select v-model="fromLang" class="block col-12 field" placeholder="Language from">
@@ -166,7 +179,7 @@ function createApp (data) {
           </select>
         </div>
 
-        <div>
+        <div class="mt1">
           <label class="label">To:</label>
           <select v-model="toLang" class="block col-12 field" placeholder="Language to">
             <optgroup>
@@ -188,15 +201,22 @@ function createApp (data) {
           </select>
         </div>
 
-        <div>
+        <div class="mt1">
           <label class="label">Text:</label>
-          <textarea v-model="text" class="block col-12 field" placeholder="Word to translate">
+          <textarea
+            v-model="text"
+            class="block col-12 field"
+            placeholder="What do you want to translate?"
+            style="height: 150px; resize: vertical;">
           </textarea>
         </div>
 
-        <div>
-          <button type="button" class="btn btn-primary" @click="handleClick">
+        <div class="mt2 mb3">
+          <button type="button" class="btn btn-primary" @click="handleTranslate">
             Translate
+          </button>
+          <button type="button" class="btn btn-outline blue ml1" @click="handleSwap">
+            Swap
           </button>
         </div>
 
@@ -205,25 +225,29 @@ function createApp (data) {
         </div>
 
         <div v-if="t.googletranslate">
-          <h2>Google Translate</h2>
-          <div>{{t.googletranslate.text}}</div>
+          <h3>Google Translate</h3>
+          <p>👉 {{t.googletranslate.text}}</p>
         </div>
 
         <div v-if="t.urbandictionary && t.urbandictionary.list && t.urbandictionary.list.length">
-          <h2>Urban Dictionary</h2>
-          <div v-for="item in t.urbandictionary.list">
-            {{item.definition}}
-          </div>
+          <h3>Urban Dictionary</h3>
+          <p v-for="item in t.urbandictionary.list">
+            <span class="block">👉 {{item.definition}}</span>
+            <span class="block h5 mt1 italic">{{item.example}}</span>
+          </p>
         </div>
 
-        <div v-if="tHistory.length">
-          <div v-for="item in tHistory">
+        <div class="mt2 mb3" v-if="tHistory.length">
+          <hr class="mb2" />
+          <div v-for="item in tHistory" class="mb1">
             <a href="#" @click.stop.prevent="goToTranslation(item)">
-              {{item.text}} ({{item.fromLang}} => {{item.toLang}})
+              {{item.text}} (from {{allLangs[item.fromLang].name}} to {{allLangs[item.toLang].name}})
             </a>
           </div>
-          <div>
-            <button type="button" class="btn btn-outline" @click="cleanHistory">Clean history</button>
+          <div class="mt2">
+            <button type="button" class="btn btn-outline h5" @click="cleanHistory">
+              Clean history
+            </button>
           </div>
         </div>
       </div>
@@ -283,6 +307,19 @@ function html (appString, state) {
         <link href="https://unpkg.com/basscss@7.1.1/css/basscss.min.css" rel="stylesheet">
       </head>
       <body>
+        <div class="clearfix white bg-black">
+          <div class="center absolute top-0 left-0 right-0 bottom-0 clearfix">
+            <a href="/" class="btn py2 h3 m0">
+              <sup class="regular h5">multi</sup>
+              <span>translator</span>
+            </a>
+          </div>
+          <div class="right">
+            <a href="https://github.com/voronianski/multi-translator" class="btn py2 m0 regular h6 caps" target="_blank">
+              GitHub
+            </a>
+          </div>
+        </div>
         <div id="app">${appString}</div>
       </body>
       <script src="https://unpkg.com/vue@${Vue.version}/dist/vue.js"></script>
@@ -297,11 +334,12 @@ module.exports = function ui (req, res, next) {
     toLang: req.query.to || defaultLangs.to,
     fromLang: req.query.from || defaultLangs.from,
     otherLangs: OTHER_LANGS,
-    topLangs: TOP_LANGS
+    topLangs: TOP_LANGS,
+    allLangs: languagesAll
   };
   const app = createApp(state);
 
   renderer.renderToString(app)
-    .then(str => res.end(html(str, state)))
+    .then(str => res.send(html(str, state)))
     .catch(next)
 };
