@@ -31,28 +31,103 @@ function createApp (data) {
 
         // client data
         t: {},
-        error: null
+        error: null,
+        tHistory: [],
       };
     },
 
     beforeMount() {
       this.getTranslation();
+      this.checkHistory();
+      this.saveToHistory();
+    },
+
+    computed: {
+      query() {
+        return `?text=${this.text}&from=${this.fromLang}&to=${this.toLang}`
+      }
     },
 
     methods: {
       handleClick() {
-        this.getTranslation();
-      },
-
-      getTranslation() {
         if (!this.text) {
           return;
         }
 
-        fetch(`/translate?text=${this.text}&from=${this.fromLang}&to=${this.toLang}`)
+        this.updateLink();
+        this.getTranslation();
+        this.saveToHistory();
+      },
+
+      getTranslation() {
+        fetch(`/translate${this.query}`)
           .then(res => res.json())
-          .then(json => this.t = json )
+          .then(json => this.t = json)
           .catch(() => this.error = 'Something went wrong while translating...');
+      },
+
+      updateLink() {
+        if (history.pushState) {
+          const url =`${location.pathname}${this.query}`;
+
+          history.pushState({ url }, '', url);
+        } else {
+          location.search = this.query;
+        }
+      },
+
+      goToTranslation(item) {
+        if (!item.text) {
+          return;
+        }
+
+        this.text = item.text;
+        this.toLang = item.toLang;
+        this.fromLang = item.fromLang;
+
+        this.updateLink();
+        this.getTranslation();
+        this.saveToHistory();
+      },
+
+      checkHistory() {
+        if (!localStorage) {
+          return;
+        }
+
+        try {
+          this.tHistory = JSON.parse(localStorage.getItem('tHistory')) || [];
+        } catch (e) {
+          // noop
+        }
+      },
+
+      saveToHistory() {
+        if (!localStorage) {
+          return;
+        }
+
+        const newItem = {
+          text: this.text,
+          toLang: this.toLang,
+          fromLang: this.fromLang
+        };
+
+        const existingIndex = this.tHistory.findIndex(item => {
+          return (
+            item.text === newItem.text &&
+            item.toLang === newItem.toLang &&
+            item.fromLang === newItem.fromLang
+          );
+        });
+
+        if (existingIndex > -1) {
+          this.tHistory.splice(existingIndex, 1);
+        }
+
+        this.tHistory.unshift(newItem);
+
+        localStorage.setItem('tHistory', JSON.stringify(this.tHistory));
       }
     },
 
@@ -106,15 +181,33 @@ function createApp (data) {
         </div>
 
         <div>
-          <span>{{text}} / {{fromLang}} / {{toLang}}</span>
-          <a href="#" @click="handleClick">Click</a>
+          <button type="button" @click="handleClick">Click</button>
+        </div>
+
+        <div v-if="error">
+          {{error}}
         </div>
 
         <div v-if="t.googletranslate">
           {{t.googletranslate.text}}
         </div>
-        <div v-if="t.urbandictionary">
-          {{t.urbandictionary.list[0].definition}}
+
+        <hr />
+
+        <div v-if="t.urbandictionary && t.urbandictionary.list && t.urbandictionary.list.length">
+          <div v-for="item in t.urbandictionary.list">
+            {{item.definition}}
+          </div>
+        </div>
+
+        <hr />
+
+        <div v-if="tHistory.length">
+          <div v-for="item in tHistory">
+            <a href="#" @click.stop.prevent="goToTranslation(item)">
+              {{item.text}} ({{item.fromLang}} => {{item.toLang}})
+            </a>
+          </div>
         </div>
       </div>
     `
