@@ -143,10 +143,10 @@ function createApp (data) {
     },
 
     template: `
-      <div class="app">
+      <div class="container p3" style="max-width: 600px;">
         <div>
-          <label>From:</label>
-          <select v-model="fromLang" placeholder="Language from">
+          <label class="label">From:</label>
+          <select v-model="fromLang" class="block col-12 field" placeholder="Language from">
             <optgroup>
               <option
                 v-for="(langVal, langName) in topLangs"
@@ -167,8 +167,8 @@ function createApp (data) {
         </div>
 
         <div>
-          <label>To:</label>
-          <select v-model="toLang" placeholder="Language to">
+          <label class="label">To:</label>
+          <select v-model="toLang" class="block col-12 field" placeholder="Language to">
             <optgroup>
               <option
                 v-for="(langVal, langName) in topLangs"
@@ -189,12 +189,15 @@ function createApp (data) {
         </div>
 
         <div>
-          <label>Text:</label>
-          <textarea v-model="text" placeholder="Word to translate"></textarea>
+          <label class="label">Text:</label>
+          <textarea v-model="text" class="block col-12 field" placeholder="Word to translate">
+          </textarea>
         </div>
 
         <div>
-          <button type="button" @click="handleClick">Translate</button>
+          <button type="button" class="btn btn-primary" @click="handleClick">
+            Translate
+          </button>
         </div>
 
         <div v-if="error">
@@ -202,18 +205,16 @@ function createApp (data) {
         </div>
 
         <div v-if="t.googletranslate">
-          {{t.googletranslate.text}}
+          <h2>Google Translate</h2>
+          <div>{{t.googletranslate.text}}</div>
         </div>
 
-        <hr />
-
         <div v-if="t.urbandictionary && t.urbandictionary.list && t.urbandictionary.list.length">
+          <h2>Urban Dictionary</h2>
           <div v-for="item in t.urbandictionary.list">
             {{item.definition}}
           </div>
         </div>
-
-        <hr />
 
         <div v-if="tHistory.length">
           <div v-for="item in tHistory">
@@ -222,7 +223,7 @@ function createApp (data) {
             </a>
           </div>
           <div>
-            <button type="button" @click="cleanHistory">Clean history</button>
+            <button type="button" class="btn btn-outline" @click="cleanHistory">Clean history</button>
           </div>
         </div>
       </div>
@@ -277,6 +278,9 @@ function html (appString, state) {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="robots" content="nofollow,noindex">
         <title>Multi Translator UI</title>
+
+        <link href="https://unpkg.com/normalize.css@8.0.0/normalize.css" rel="stylesheet">
+        <link href="https://unpkg.com/basscss@7.1.1/css/basscss.min.css" rel="stylesheet">
       </head>
       <body>
         <div id="app">${appString}</div>
