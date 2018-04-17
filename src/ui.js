@@ -2,7 +2,7 @@ const Vue = require('vue');
 const renderer = require('vue-server-renderer').createRenderer();
 const UglifyJS = require('uglify-js');
 const { transform } = require('@babel/core');
-const { env, priorityLangs } = require('c0nfig');
+const { env, defaultLangs, priorityLangs } = require('c0nfig');
 const { languagesAll } = require('countries-list');
 
 const OTHER_LANGS = { ...languagesAll };
@@ -37,8 +37,13 @@ function createApp (data) {
     },
 
     beforeMount() {
-      this.getTranslation();
       this.checkHistory();
+
+      if (!this.text) {
+        return;
+      }
+
+      this.getTranslation();
       this.saveToHistory();
     },
 
@@ -128,6 +133,12 @@ function createApp (data) {
         this.tHistory.unshift(newItem);
 
         localStorage.setItem('tHistory', JSON.stringify(this.tHistory));
+      },
+
+      cleanHistory() {
+        this.tHistory = [];
+
+        localStorage.removeItem('tHistory');
       }
     },
 
@@ -208,6 +219,9 @@ function createApp (data) {
               {{item.text}} ({{item.fromLang}} => {{item.toLang}})
             </a>
           </div>
+          <div>
+            <button type="button" @click="cleanHistory">Clean history</button>
+          </div>
         </div>
       </div>
     `
@@ -273,9 +287,9 @@ function html (appString, state) {
 
 module.exports = function ui (req, res, next) {
   const state = {
-    text: req.query.text,
-    toLang: req.query.to,
-    fromLang: req.query.from,
+    text: req.query.text || '',
+    toLang: req.query.to || defaultLangs.to,
+    fromLang: req.query.from || defaultLangs.from,
     otherLangs: OTHER_LANGS,
     topLangs: TOP_LANGS
   };
